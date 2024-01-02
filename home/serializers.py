@@ -22,4 +22,15 @@ class StudentSerializer(serializers.ModelSerializer):
         return data
     
 
-    
+class CategorySerializer (serializers.ModelSerializer):
+    class Meta :
+        model = Category
+        fields = ['category_name']
+
+class BookSerializer (serializers.ModelSerializer):
+    # Category Creation/Updation should be handled seperately 
+    # category = CategorySerializer(read_only = True) 
+    class Meta :
+        model = Book
+        fields = '__all__'
+        depth =1

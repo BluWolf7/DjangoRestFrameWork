@@ -13,6 +13,49 @@ logger = logging.getLogger(__name__)
 
 # Create your views here.
 
+@api_view(['GET'])
+def get_book(request):
+    book_objs = Book.objects.all()
+    serializer = BookSerializer(book_objs, many=True)
+    if not serializer.data:
+            return Response({'status': status.HTTP_200_OK, 'message': 'No Books Present in database'})
+
+    return Response({'status': status.HTTP_200_OK, 'payload': serializer.data})
+
+@api_view(['POST'])
+def add_book(request):
+    data = request.data
+    category_name = data.get('category', {}).get('category_name')
+
+    try:
+        category = Category.objects.filter(category_name=category_name).first()
+        if not category:
+            return Response({'status': status.HTTP_403_FORBIDDEN, 'message': 'Category does not exist. Please create the category first.'})
+
+        book_data = {'category': category.id, 'book_title': data.get('book_title')}
+        book_serializer = BookSerializer(data=book_data)
+        if book_serializer.is_valid():
+            book_serializer.save(category=category)  # Assign category object directly
+            return Response({'status': status.HTTP_200_OK, 'payload': book_serializer.data, 'message': 'Book added'})
+        else:
+            return Response({'status': status.HTTP_403_FORBIDDEN, 'errors': book_serializer.errors, 'message': 'Invalid book data'})
+
+    except Exception as e:
+        return Response({'status': status.HTTP_500_INTERNAL_SERVER_ERROR, 'message': str(e)})
+
+
+
+
+@api_view(['POST'])
+def add_category(request):
+    data = request.data
+    category_serializer = CategorySerializer(data=data)
+    if category_serializer.is_valid():
+        category_serializer.save()
+        return Response({'status': status.HTTP_200_OK, 'payload': category_serializer.data, 'message': 'Category added'})
+    else:
+        return Response({'status': status.HTTP_403_FORBIDDEN, 'errors': category_serializer.errors, 'message': 'Invalid category data'})
+    
 # @api_view(['GET'])
 # def home(request):
 #     paginator = PageNumberPagination()

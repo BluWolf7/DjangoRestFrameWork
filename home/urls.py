@@ -10,4 +10,7 @@ urlpatterns = [
     path('update-student/<id>/', views.update_student),
     path('delete-student/<id>/', views.delete_student),
     path('delete-student-alternate/', views.delete_student_alternate),
+    path('get-book/', views.get_book),
+    path('add-book/',views.add_book),
+    path('add-category/',views.add_category)
 ]
