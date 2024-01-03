@@ -8,6 +8,11 @@ from .models import *
 from .serializers import *
 import logging
 from rest_framework.views import APIView
+from rest_framework.authtoken.models import Token
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
+
+
 
 
 
@@ -24,9 +29,26 @@ def get_book(request):
 
     return Response({'status': status.HTTP_200_OK, 'payload': serializer.data})
 
+class RegisterUser(APIView):
+
+    def post(self,request):
+        serializer = UserSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response({'status': status.HTTP_403_FORBIDDEN, 'message': 'Something went wrong','error':serializer.errors})
+
+        serializer.save()
+        user = User.objects.get(username=serializer.data['username'])
+        token_obj, _ = Token.objects.get_or_create(user=user)
+        return Response({'status': status.HTTP_200_OK, 'payload': serializer.data, 'token':str(token_obj), 'message': 'Your data has been saved '})
+
+
 
 # APIVIEW Reduces Routing overhead ; one route for all student apis 
 class StudentAPI(APIView):
+      
+      authentication_classes = [TokenAuthentication]
+      permission_classes = [IsAuthenticated] # only authenticated users can access this api
       
       def get(self,request):
         paginator = PageNumberPagination()
@@ -37,9 +59,11 @@ class StudentAPI(APIView):
             serializer = StudentSerializer(page, many=True)
             response_data = paginator.get_paginated_response(serializer.data)
             response_data.data['status'] = status.HTTP_200_OK  
+            print(f"User accessing GET STUDENTS API: '{request.user}'")
             return response_data
         else:
             serializer = StudentSerializer(student_objs, many=True)
+            print(f"User accessing GET STUDENTS API: '{request.user}'")
             return Response({'status': status.HTTP_200_OK, 'payload': serializer.data})
       
       def post(self,request):
@@ -47,9 +71,12 @@ class StudentAPI(APIView):
         print(data)
         serializer = StudentSerializer(data=data)
         if serializer.is_valid():
+            print(f"User accessing POST STUDENTS API: '{request.user}'")
             serializer.save()
         else:
             logging.info('error reason: ' + str(serializer.error_messages))
+            print(f"User accessing POST STUDENTS API: '{request.user}'")
+            print("Errors are: ")
             print(serializer.error_messages)
             return Response({'status': status.HTTP_403_FORBIDDEN,'errors':serializer.errors, 'message':"Something went wrong"})
             
@@ -65,19 +92,23 @@ class StudentAPI(APIView):
 
             if not serializer.is_valid():
                 logging.info('error reason: ' + str(serializer.errors))
+                print(f"User accessing PUT STUDENTS API: '{request.user}'")
                 print(serializer.errors)
                 return Response({'status': status.HTTP_403_FORBIDDEN, 'errors': serializer.errors, 'message': "Something went wrong"})
-
+            print(f"User accessing PUT STUDENTS API: '{request.user}'")
             serializer.save()
             logging.info('Successfully updated student information')
             return Response({'status': status.HTTP_200_OK, 'payload': serializer.data, 'message': 'Student updated'})
 
         except Student.DoesNotExist:
+            print(f"User accessing PUT STUDENTS API: '{request.user}'")
             return Response({'status': status.HTTP_404_NOT_FOUND, 'message': 'Student not found'})
         except Exception as e:
+            print(f"User accessing PUT STUDENTS API: '{request.user}'")
             return Response({'status': status.HTTP_500_INTERNAL_SERVER_ERROR, 'message': str(e)})
 
       def patch(self, request):
+        print(f"User accessing PATCH STUDENTS API: '{request.user}'")
         try:
             student_id = request.data.get('id')  # Extract 'id' from request data
             student_obj = Student.objects.get(id=student_id)
@@ -100,6 +131,7 @@ class StudentAPI(APIView):
 
       
       def delete(self,request):
+        print(f"User accessing DELETE STUDENTS API: '{request.user}'")
         # alternate delete also works if you provide id in url as query param  instead of request.data.get('id') use id = request.GET.get('id')
         try:
             student_id = request.data.get('id')  # Extract 'id' from request data
