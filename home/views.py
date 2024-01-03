@@ -49,8 +49,8 @@ class StudentAPI(APIView):
       
       authentication_classes = [TokenAuthentication]
       permission_classes = [IsAuthenticated] # only authenticated users can access this api
-      
       def get(self,request):
+        print(f"User accessing GET STUDENTS API: '{request.user}'")
         paginator = PageNumberPagination()
         student_objs = Student.objects.all()
         page = paginator.paginate_queryset(student_objs, request)
@@ -59,31 +59,29 @@ class StudentAPI(APIView):
             serializer = StudentSerializer(page, many=True)
             response_data = paginator.get_paginated_response(serializer.data)
             response_data.data['status'] = status.HTTP_200_OK  
-            print(f"User accessing GET STUDENTS API: '{request.user}'")
             return response_data
         else:
             serializer = StudentSerializer(student_objs, many=True)
-            print(f"User accessing GET STUDENTS API: '{request.user}'")
             return Response({'status': status.HTTP_200_OK, 'payload': serializer.data})
       
       def post(self,request):
+        print(f"User accessing POST STUDENTS API: '{request.user}'")
         data = request.data
         print(data)
         serializer = StudentSerializer(data=data)
         if serializer.is_valid():
-            print(f"User accessing POST STUDENTS API: '{request.user}'")
-            serializer.save()
+                        serializer.save()
         else:
             logging.info('error reason: ' + str(serializer.error_messages))
-            print(f"User accessing POST STUDENTS API: '{request.user}'")
-            print("Errors are: ")
-            print(serializer.error_messages)
+            print()
+            print(f"Errors are: '{serializer.error_messages}'")
             return Response({'status': status.HTTP_403_FORBIDDEN,'errors':serializer.errors, 'message':"Something went wrong"})
             
         logging.info('Successfully added student information')
         return Response({'status': status.HTTP_200_OK, 'payload': serializer.data,'message':'Student added'})
       
       def put(self, request):
+        print(f"User accessing PUT STUDENTS API: '{request.user}'")
         try:
             student_id = request.data.get('id')  # Extract 'id' from request data
             student_obj = Student.objects.get(id=student_id)
@@ -92,19 +90,15 @@ class StudentAPI(APIView):
 
             if not serializer.is_valid():
                 logging.info('error reason: ' + str(serializer.errors))
-                print(f"User accessing PUT STUDENTS API: '{request.user}'")
-                print(serializer.errors)
+                print(f"Errors are: '{serializer.error_messages}'")
                 return Response({'status': status.HTTP_403_FORBIDDEN, 'errors': serializer.errors, 'message': "Something went wrong"})
-            print(f"User accessing PUT STUDENTS API: '{request.user}'")
             serializer.save()
             logging.info('Successfully updated student information')
             return Response({'status': status.HTTP_200_OK, 'payload': serializer.data, 'message': 'Student updated'})
 
         except Student.DoesNotExist:
-            print(f"User accessing PUT STUDENTS API: '{request.user}'")
             return Response({'status': status.HTTP_404_NOT_FOUND, 'message': 'Student not found'})
         except Exception as e:
-            print(f"User accessing PUT STUDENTS API: '{request.user}'")
             return Response({'status': status.HTTP_500_INTERNAL_SERVER_ERROR, 'message': str(e)})
 
       def patch(self, request):
@@ -117,7 +111,7 @@ class StudentAPI(APIView):
 
             if not serializer.is_valid():
                 logging.info('error reason: ' + str(serializer.errors))
-                print(serializer.errors)
+                print(f"Errors are: '{serializer.error_messages}'")
                 return Response({'status': status.HTTP_403_FORBIDDEN, 'errors': serializer.errors, 'message': "Something went wrong"})
 
             serializer.save()
@@ -139,7 +133,7 @@ class StudentAPI(APIView):
             student_obj.delete()
             return Response({'status': status.HTTP_200_OK, 'message':'Student Data Deleted Successfully'})
         except Exception as e:
-            print(e)
+            print(f"Exception Caught: '{e}'")
             return Response({'status': status.HTTP_403_FORBIDDEN, 'message':'Invalid id'})
 
 
