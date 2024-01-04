@@ -9,8 +9,18 @@ from .serializers import *
 import logging
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
-from rest_framework.authentication import TokenAuthentication
+
+# for normal token authentication
+# from rest_framework.authentication import TokenAuthentication
+# from rest_framework.permissions import IsAuthenticated
+
+# for jwt token authentication
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
+
+#for manually generating JWT token for a user
+from rest_framework_simplejwt.tokens import RefreshToken
+
 
 
 
@@ -39,20 +49,35 @@ class RegisterUser(APIView):
 
         serializer.save()
         user = User.objects.get(username=serializer.data['username'])
-        token_obj, _ = Token.objects.get_or_create(user=user)
-        return Response({'status': status.HTTP_200_OK, 'payload': serializer.data, 'token':str(token_obj), 'message': 'Your data has been saved '})
+
+        #As soon as user registers user will get a token 
+
+
+        # manually getting a normal token for user 
+        # token_obj, _ = Token.objects.get_or_create(user=user)
+
+        # manually getting a JWT token for user 
+        # if u want to generate token manually for a user then u may call this method 
+        refresh = RefreshToken.for_user(user)
+
+        # manually getting a normal token for user 
+        # return Response({'status': status.HTTP_200_OK, 'payload': serializer.data, 'token':str(token_obj), 'message': 'Your data has been saved '})
+
+        # manually getting a JWT token for user 
+        return Response({'status': status.HTTP_200_OK, 'payload': serializer.data, 'refresh': str(refresh),
+        'access': str(refresh.access_token), 'message': 'Your data has been saved '})
 
 
 
 # APIVIEW Reduces Routing overhead ; one route for all student apis 
 class StudentAPI(APIView):
       
-      authentication_classes = [TokenAuthentication]
+      authentication_classes = [JWTAuthentication]
       permission_classes = [IsAuthenticated] # only authenticated users can access this api
       def get(self,request):
         print(f"User accessing GET STUDENTS API: '{request.user}'")
         paginator = PageNumberPagination()
-        student_objs = Student.objects.all()
+        student_objs = Student.objects.all().order_by('id')
         page = paginator.paginate_queryset(student_objs, request)
     
         if page is not None:
