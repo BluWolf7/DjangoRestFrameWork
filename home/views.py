@@ -21,6 +21,9 @@ from rest_framework.permissions import IsAuthenticated
 #for manually generating JWT token for a user
 from rest_framework_simplejwt.tokens import RefreshToken
 
+#Generic Views
+from rest_framework import generics
+
 
 
 
@@ -30,14 +33,51 @@ logger = logging.getLogger(__name__)
 
 # Create your views here.
 
-@api_view(['GET'])
-def get_book(request):
-    book_objs = Book.objects.all()
-    serializer = BookSerializer(book_objs, many=True)
-    if not serializer.data:
-            return Response({'status': status.HTTP_200_OK, 'message': 'No Books Present in database'})
+###################################################################################################################################################
 
-    return Response({'status': status.HTTP_200_OK, 'payload': serializer.data})
+#generic view method for crud
+        
+###################################################################################################################################################
+
+
+class StudentGeneric(generics.ListAPIView,generics.CreateAPIView):
+    queryset = Student.objects.all()
+    serializer_class =StudentSerializer
+
+class StudentGeneric1(generics.UpdateAPIView,generics.DestroyAPIView):
+    queryset = Student.objects.all()
+    serializer_class =StudentSerializer
+    lookup_field = 'id'
+     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+###################################################################################################################################################
+
+#APIVIEW method for crud
+        
+###################################################################################################################################################
+
+
 
 class RegisterUser(APIView):
 
@@ -163,24 +203,20 @@ class StudentAPI(APIView):
 
 
 
+###################################################################################################################################################
 
+#@api_view decorator method for crud
+        
+###################################################################################################################################################
 
+# @api_view(['GET'])
+# def get_book(request):
+#     book_objs = Book.objects.all()
+#     serializer = BookSerializer(book_objs, many=True)
+#     if not serializer.data:
+#             return Response({'status': status.HTTP_200_OK, 'message': 'No Books Present in database'})
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#     return Response({'status': status.HTTP_200_OK, 'payload': serializer.data})
 
 # @api_view(['POST'])
 # def add_book(request):
